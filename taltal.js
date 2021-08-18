@@ -31,24 +31,24 @@ const scriptName = "taltal";
   "제주": 5011059000
 };
 
-const FUNC_LIST = [ "/날씨", "/카운트다운" ];
+const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님" ];
 const MANGER_FUNC_LIST = [ "/DB생성", "" ];
 
 
 function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
-
 
   var method = msg.split(" ")[0];
 
   switch(method){
     case "/날씨" :  getWeather(msg,replier);
       break;
-    case "/명령어" :  getOrderList(msg,replier);
+    case "/명령어" :  getOrderList(replier);
       break;
     case "/카운트다운" : countDown(msg,replier);
       break;
+    case "/마법의소라고동님" : maginSora(msg,replier);
+      break;
   }
-
 
   if(sender == "김진원"){
     checkExistDB(msg,replier);
@@ -86,6 +86,42 @@ function chooseOne(){
   var list ="";  
 }
 
+//마법의 소라고동 
+function maginSora(msg,replier){
+  makeFunction(msg, "/마법의소라고동님",
+  function(){
+    replier.reply("마법의 소라고동님에게 질문합니다.\n\n" +
+    "\"예시) /마법의소라고동님 내일 비가 올까요?");
+  }, function(){
+    
+    var randomNum = Math.floor(Math.random()*10);
+    var resultTxt = "";
+    
+    switch(randomNum){
+      case 1 : resultTxt = "안 돼";
+        break;
+      case 2 : resultTxt = "응 돼";
+        break;
+      case 3 : resultTxt = "그러렴";
+        break;
+      case 4 : resultTxt = "다시 한 번 말해봐";
+        break;
+      case 5 : resultTxt = "아니";
+        break;
+      case 6 : resultTxt = "그럼";
+        break;
+      case 7 : resultTxt = "다 안돼";
+        break;
+      case 8 : resultTxt = "가만히 있어";
+        break;
+      case 9 : resultTxt = "언젠가는";
+        break;
+
+    }
+    replier.reply(resultTxt);
+  });
+}
+
 function countDown(msg,replier){ 
   makeFunction(msg, "/카운트다운", 
   function(){
@@ -96,17 +132,15 @@ function countDown(msg,replier){
     var number = msg.replace("/카운트다운 ", "");
     number     = number.replace(regex, "");	// 원래 문자열에서 숫자가 아닌 모든 문자열을 빈 문자로 변경
     
-    if(number>10|| number<1){
+    if(number > 10 || number < 1){
       replier.reply("1~10 사이 숫자만 가능합니다.");
       return;
     }
     
-    var countdown = 
-      setInterval(
+    var countdown = setInterval(
         function(){
           replier.reply(number);
-          number--;
-          
+          number--;          
           if(number<1){
             clearInterval(countdown);
           }
@@ -148,14 +182,15 @@ function getWeather(msg,replier) {
       replier.reply(result);
   }
 }
+
 /**
- * 작동함수 생성 함수 (설명부분과 실작동 함수) 
+ * 작동함수 생성 함수 (도움말 부분과 실작동 함수) 
  * @param {String} msg  input문장
  * @param {String} word 검사단어
  * @param {Function} helpFunction 도움말 함수 
  * @param {Function} realFunction 작동 함수
  */
-function makeFunction(msg,word,helpFunction,realFunction){
+function makeFunction(msg, word, helpFunction, realFunction){
   if (msg == word) {
     helpFunction();
   } else if(msg.startsWith(word)){
