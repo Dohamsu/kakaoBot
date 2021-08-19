@@ -31,12 +31,11 @@ const scriptName = "taltal";
   "제주": 5011059000
 };
 
-const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님" ];
+const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님", "/선택" ];
 const MANGER_FUNC_LIST = [ "/DB생성", "" ];
 
 
 function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
-
   var method = msg.split(" ")[0];
 
   switch(method){
@@ -46,20 +45,29 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       break;
     case "/카운트다운" : countDown(msg,replier);
       break;
-    case "/마법의소라고동님" : maginSora(msg,replier);
+    case "/마법의소라고동님" : magicSora(msg,replier);
       break;
-  }
+    case "/선택" : chooseOne(msg,replier , sender);
+      break;
+    case "/방탈리스트" : searchRoomList(msg,replier);
+      break;
+    case "/방탈상세" : searchRoomDetail(msg,replier);
+      break;
+    }
 
   if(sender == "김진원"){
     checkExistDB(msg,replier);
   }
+
+  //메시지 읽음 처리
+  replier.markAsRead();
 }
 
 
 //DB생성 함수
 function checkExistDB(msg, replier){
   switch(msg){
-    case "/DB생성": 
+    case "/DB 생성": 
       if(  DataBase.getDataBase("normalDB")  ){
         replier.reply("이미 생성된 DB가 있습니다.");
       }else{
@@ -77,17 +85,116 @@ function checkExistDB(msg, replier){
   }
 }
 
-function getSender(msg,replier,sender){
-  // replier.reply(sender);
-
+//DB저장하기
+function saveDB(fileName, data){
+  let isDB       = DataBase.getDataBase(fileName);
+  let insertData = JSON.stringify(data);
+  //DB존재시 이어쓰기
+  if(isDB){
+    DataBase.appendDataBase(fileName, insertData);
+  }else{
+    //DB 미존재 시 생성 및 데이터 저장
+    DataBase.setDataBase(fileName, insertData);
+  }
 }
 
-function chooseOne(){
-  var list ="";  
+//DB 불러오기
+function getDB(fileName){
+  let dbString = DataBase.getDataBase(fileName);
+  if(dbString){
+    let dbObject = JSON.parse(dbString);
+    Log.d("db로드 완료 ");
+    return dbObject;
+  }else{
+    replier.reply("요청한 DB가 존재하지 않습니다.");
+  }
+}
+
+//방탈출 리스트 검색
+function searchRoomList(msg, replier){
+  makeFunction(msg,"/방탈리스트",function(){
+    replier.reply("지역별 방탈출 목록을 검색합니다 .\n\n" +
+    "예시) /방탈리스트 대지역 소지역 결과갯수 \n /방탈리스트 서울 강남 10");
+  },function(){
+    let inputTxt     = msg.replace("/방탈리스트 ", "");
+    let inputDist1   = inputTxt.split(" ")[0];
+    let inputDist2   = inputTxt.split(" ")[1];
+    let resultLimit  = inputTxt.split(" ")[2] || 10; //결과 목록 수 
+    let listArray    = getDB("roomExList");
+    let resultStr    = ""; 
+    let tryNumber    = 0;
+
+    listArray.forEach(element => {
+      if(element.dist1.includes(inputDist1) || element.dist2.includes(inputDist1) || element.dist2.includes(inputDist2) ){
+        if(tryNumber == resultLimit){
+          return;
+        }        
+        resultStr += "\n " + element.theme;
+        tryNumber++;
+      }
+    });
+    replier.reply(resultStr);
+  });
+}
+
+//방탈출 상세 검색
+function searchRoomDetail(msg, replier){
+  makeFunction(msg,"/방탈상세",function(){
+    replier.reply("방탈출에 대한 상세 정보를 검색합니다 .\n\n" +
+    "예시) /방탈상세 테마명  지점 평점 난이도 공포도 활동성 \n /방탈상세 퀘스천마크 평점 난이도");
+  },function(){
+    let inputTxt        = msg.replace("/방탈상세 ", "");
+    let inputTheme      = inputTxt.split(" ")[0];
+    let listArray       = getDB("roomExList");
+    let tempTxt         = ""; 
+    let selectAll       = inputTxt.includes("전체");
+    let selectStore     = inputTxt.includes("지점") || selectAll; 
+    let selectScore     = inputTxt.includes("평점") || selectAll; 
+    let selectDificulty = inputTxt.includes("난이도") || selectAll; 
+    let selectHorror    = inputTxt.includes("공포도") || selectAll; 
+    let selectActivity  = inputTxt.includes("활동성") || selectAll; 
+    let resultArray     = [];
+    listArray.forEach(element => {
+      if(element.theme.replace(" ", "").includes(inputTheme)){
+        tempTxt = "\n " + element.theme;
+        tempTxt = selectStore == true ? tempTxt + " \n 지점 : " + element.storeName : tempTxt; 
+        tempTxt = selectScore == true ? tempTxt + " \n 평점 : " + element.score : tempTxt; 
+        tempTxt = selectDificulty == true ? tempTxt + " \n 난이도 : " + element.dificulty: tempTxt; 
+        tempTxt = selectHorror == true ? tempTxt + "\n 공포도 : " + element.horror: tempTxt; 
+        tempTxt = selectActivity == true ? tempTxt + "\n 활동성 : " + element.activity: tempTxt; 
+        resultArray.push(tempTxt);
+      }
+    });
+    replier.reply(resultArray.slice(0,10));
+  });
+}
+
+//선택지 고르는 함수
+function chooseOne(msg, replier,sender){
+  makeFunction(msg, "/선택",
+  function(){
+    replier.reply("여러 선택지중 하나를 선택합니다.\n\n" +
+    "\"예시) /선택 물냉면,비빔냉면");
+  }, function(){
+    msg           = msg.replace("/선택 ", "");
+    let list      = msg.split(",");  
+  
+    if(list.length < 2){
+      replier.reply("형식에 맞지 않습니다. ,로 단어를 연결해주세요" );
+    }else{
+      let randomNum = Math.floor(Math.random()*list.length);
+      let resultTxt = list[randomNum];
+      replier.reply(resultTxt);
+
+      let obj = {};
+      obj.keywordList  = msg;
+      saveDB(sender, obj );
+    }
+  }); 
 }
 
 //마법의 소라고동 
-function maginSora(msg,replier){
+function magicSora(msg,replier){
   makeFunction(msg, "/마법의소라고동님",
   function(){
     replier.reply("마법의 소라고동님에게 질문합니다.\n\n" +
@@ -151,7 +258,11 @@ function countDown(msg,replier){
 
 //명령어 리스트 출력 함수
 function getOrderList(replier){
-    replier.reply(FUNC_LIST);
+  let resultTxt = "";
+  FUNC_LIST.forEach(element => {
+    resultTxt += "\n" +element;
+  });
+    replier.reply(resultTxt);
 }
 
 //날씨 함수
@@ -199,6 +310,8 @@ function makeFunction(msg, word, helpFunction, realFunction){
 }
 
 
+
+
 //아래 4개의 메소드는 액티비티 화면을 수정할때 사용됩니다.
 function onCreate(savedInstanceState, activity) {
   var textView = new android.widget.TextView(activity);
@@ -206,8 +319,6 @@ function onCreate(savedInstanceState, activity) {
   textView.setTextColor(android.graphics.Color.DKGRAY);
   activity.setContentView(textView);
 }
-
-
 
 function onStart(activity) {}
 
