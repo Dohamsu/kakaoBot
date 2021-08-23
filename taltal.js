@@ -31,13 +31,14 @@ const scriptName = "taltal";
   "제주": 5011059000
 };
 
-const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님", "/선택" ];
+const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님", "/선택", "/방탈리스트", "/방탈상세" ];
 const MANGER_FUNC_LIST = [ "/DB생성", "" ];
 
 
 function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
   var method = msg.split(" ")[0];
 
+  //명령어 반응
   switch(method){
     case "/날씨" :  getWeather(msg,replier);
       break;
@@ -58,6 +59,12 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
   if(sender == "김진원"){
     checkExistDB(msg,replier);
   }
+
+  //구어에 반응
+  switch(msg){   
+    case "집에 가고싶다" : calculRemainTime(msg,replier, 18);
+      break;
+   }
 
   //메시지 읽음 처리
   replier.markAsRead();
@@ -167,6 +174,29 @@ function searchRoomDetail(msg, replier){
     });
     replier.reply(resultArray.slice(0,10));
   });
+}
+
+//남은시간 계산기 
+function calculRemainTime(msg, replier, time){
+  let nowTime  = new Date();
+  let nowYear  = nowTime.getFullYear();
+  let nowMonth = nowTime.getMonth();
+  let nowDay   = nowTime.getDate();
+  let nowHour  = nowTime.getHours();
+  let nowMin   = nowTime.getMinutes();
+  let targetTime = new Date(nowYear, nowMonth, nowDay, time);
+  let term = targetTime - nowTime;
+  // let hour    = time.
+  
+  let termHour = Math.floor(term/1000/60/60);
+  let termMin  = Math.ceil((term/1000/60)%60);
+
+  if(termHour > 8 || termHour < 0){
+    // replier.reply("");
+  }else{
+    replier.reply("퇴근까지 " + termHour + "시간 " +termMin+ "분 남았습니다.");
+
+  }
 }
 
 //선택지 고르는 함수
