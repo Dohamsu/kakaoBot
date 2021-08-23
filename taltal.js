@@ -31,11 +31,12 @@ const scriptName = "taltal";
   "제주": 5011059000
 };
 
-const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님", "/선택", "/방탈리스트", "/방탈상세" ];
+const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님", "/선택", "/방탈리스트", "/방탈상세", "/방탈예약" ];
 const MANGER_FUNC_LIST = [ "/DB생성", "" ];
-
+const ROOM_CROLLING_URL = "http://110.35.170.102:8808/croll/";
 
 function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
+  var fullMsg = msg;
   var method = msg.split(" ")[0];
 
   //명령어 반응
@@ -54,15 +55,29 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       break;
     case "/방탈상세" : searchRoomDetail(msg,replier);
       break;
+    case "/방탈예약" : checkReserableTime(msg, replier, sender);
+      break;
     }
 
   if(sender == "김진원"){
-    checkExistDB(msg,replier);
+    // checkExistDB(msg,replier);
+
+    // switch(method){
+    //   case "/방탈예약" : checkReserableTime(msg, replier, sender);
+    //     break;
+    //   }
   }
 
   //구어에 반응
-  switch(msg){   
-    case "집에 가고싶다" : calculRemainTime(msg,replier, 18);
+  switch(fullMsg){   
+    case "집에 가고싶다" :
+    case "집에 가고싶어" :
+    case "퇴근 마렵다" :
+    case "퇴근마렵다" : 
+    case "퇴근할래" : 
+    case "집갈래" : 
+
+      calculRemainTime(msg,replier, 18);
       break;
    }
 
@@ -142,6 +157,7 @@ function searchRoomList(msg, replier){
     });
     replier.reply(resultStr);
   });
+
 }
 
 //방탈출 상세 검색
@@ -194,7 +210,9 @@ function calculRemainTime(msg, replier, time){
   if(termHour > 8 || termHour < 0){
     // replier.reply("");
   }else{
-    replier.reply("퇴근까지 " + termHour + "시간 " +termMin+ "분 남았습니다.");
+    let hourText = termHour < 1 ?   "" : termHour + "시간 ";
+    
+    replier.reply("퇴근까지 " + hourText + termMin+ "분 남았습니다.");
 
   }
 }
@@ -259,6 +277,7 @@ function magicSora(msg,replier){
   });
 }
 
+//숫자 카운트 다운
 function countDown(msg,replier){ 
   makeFunction(msg, "/카운트다운", 
   function(){
@@ -324,6 +343,67 @@ function getWeather(msg,replier) {
   }
 }
 
+//방탈 예약가능 시간 확인
+function checkReserableTime(msg,replier){
+  if (msg == "/방탈예약") {
+    replier.reply("방탈 예약가능 시간을 검색합니다.\n\n" +
+        "\"예시) /방탈예약 05/05 서울이스케이프룸강남\"\n");
+  } else if (msg.startsWith("/방탈예약 ")) {
+      let inputText  = msg.replace("/방탈예약 ", "");
+      let month      = inputText.split(" ")[0];
+      let day        = inputText.split(" ")[1];
+      let inputTheme = inputText.split(" ")[2];
+      let searchUrl  = ROOM_CROLLING_URL + "month=" + month +"&day=" +day;
+
+      //jsoup의 경우 파싱과 xml response 만 가능하여 xml 형식으로 받음
+      var data        = org.jsoup.Jsoup.connect(searchUrl).get();      
+      let resultArray = JSON.parse(data); //tojson
+      let returnText  = "";
+
+      
+      resultArray.forEach(element => {
+        let title          = element.title;
+        let summary        = element.summary;
+        let reservableTime = element.reservableTime == "" ||  element.reservableTime == undefined ? "마감" : element.reservableTime ;
+        let tempText       = "";
+        reservableTime    = refineTimeArray(reservableTime);
+        if(title.includes(inputTheme)){
+          tempText = "\n "+ title+ 
+          //  "\n 설명" + summary +
+           "\n 예약 가능시간 :" + reservableTime + "\n";
+          returnText +=tempText;
+        }
+
+        //시간 array 가공
+        function refineTimeArray(str){
+          let timeArray = [];
+          let strLength = str.length;
+          if(strLength > 5){
+              let objectCycle = Math.floor(strLength/5);
+              for(let cycle = 0 ; cycle < objectCycle; cycle++){
+                  timeArray.push(" "+str.substr(cycle*5,5));
+              }
+              return timeArray;
+          }else{
+              return str;
+          }
+        }
+      });
+
+      if(returnText.length <2){
+        replier.reply("결과가 존재하지 않습니다.");
+      }else{
+        replier.reply(returnText);
+      }
+  }
+}
+
+
+//눈치게임 
+function whoIsLast(){
+  
+}
+
 /**
  * 작동함수 생성 함수 (도움말 부분과 실작동 함수) 
  * @param {String} msg  input문장
@@ -338,8 +418,6 @@ function makeFunction(msg, word, helpFunction, realFunction){
     realFunction();
   }
 }
-
-
 
 
 //아래 4개의 메소드는 액티비티 화면을 수정할때 사용됩니다.
