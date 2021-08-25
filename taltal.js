@@ -31,8 +31,11 @@ const scriptName = "taltal";
   "제주": 5011059000
 };
 
-const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님", "/선택", "/방탈리스트", "/방탈상세", "/방탈예약" ];
+const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님", "/선택", "/방탈리스트", "/방탈상세"];
 const MANGER_FUNC_LIST = [ "/DB생성", "" ];
+const ROOM_STORE_LIST = [{"storeName" : "비밀의화원 혜화점", "site" : "secretGarden_Hyewha"}, {"storeName" : "비밀의화원 리버타운점", "site" : "secretGarden_RiverTown"},
+ {"storeName" : "비밀의화원 시네마틱혜화", "site" : "secretGarden_CenematicHyewha"},{"storeName" : "포인트나인 강남1호점", "site" : "pointNine_Gangnam1"},
+ {"storeName" : "포인트나인 강남2호점", "site" : "pointNine_Gangnam2"}];
 const ROOM_CROLLING_URL = "http://110.35.170.102:8808/croll/";
 
 function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
@@ -59,7 +62,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       break;
     }
 
-  if(sender == "김진원"){
+  if(sender == "김진원" ||sender == "김진원/도함수의활용" ){
     // checkExistDB(msg,replier);
 
     // switch(method){
@@ -347,34 +350,60 @@ function getWeather(msg,replier) {
 function checkReserableTime(msg,replier){
   if (msg == "/방탈예약") {
     replier.reply("방탈 예약가능 시간을 검색합니다.\n\n" +
-        "\"예시) /방탈예약 05/05 서울이스케이프룸강남\"\n");
+        "\"예시) /방탈예약 05/05/비밀의화원 리버타운점\"\n\n예약가능 매장"
+        +getSearchableRoomStoreList());
   } else if (msg.startsWith("/방탈예약 ")) {
+    
+      //지점을 구별  URL 인자로 변환
+      function changeToSite(storeName){
+        let siteParam = "";
+        ROOM_STORE_LIST.forEach(element =>{
+          if(element.storeName.replace(/(\s*)/g,"") == storeName.replace(/(\s*)/g,"")){
+            siteParam = element.site;
+          }            
+        });
+        return siteParam;
+      }
+
       let inputText  = msg.replace("/방탈예약 ", "");
-      let month      = inputText.split(" ")[0];
-      let day        = inputText.split(" ")[1];
-      let inputTheme = inputText.split(" ")[2];
-      let searchUrl  = ROOM_CROLLING_URL + "month=" + month +"&day=" +day;
+      let month      = inputText.split("/")[0];
+      let day        = inputText.split("/")[1];
+      let inputTheme = inputText.split("/")[2];
+      if(!inputTheme){
+        showCautionMsg(replier);
+        return;
+      }
+      let siteUrl    = changeToSite(inputTheme);
+      let searchUrl  = ROOM_CROLLING_URL + siteUrl + "/month=" + month +"&day=" +day;
+
+      if(!siteUrl){
+        replier.reply("해당 지점은 검색할 수 없습니다.");
+        return;
+      }
 
       //jsoup의 경우 파싱과 xml response 만 가능하여 xml 형식으로 받음
       var data        = org.jsoup.Jsoup.connect(searchUrl).get();      
       let resultArray = JSON.parse(data); //tojson
       let returnText  = "";
+      let directUrl   = "";
 
-      
+      //결과 메시지 가공
       resultArray.forEach(element => {
         let title          = element.title;
         let summary        = element.summary;
-        let reservableTime = element.reservableTime == "" ||  element.reservableTime == undefined ? "마감" : element.reservableTime ;
+        let reservableTime = element.reservableTime == "" ||  element.reservableTime == undefined ? " 마감" : element.reservableTime ;
         let tempText       = "";
-        reservableTime    = refineTimeArray(reservableTime);
-        if(title.includes(inputTheme)){
+        reservableTime    = refineTimeArray(reservableTime.replace(/(\s*)/g,""));
+        directUrl         = element.siteUrl;
+
+        // if(title.includes(inputTheme)){
           tempText = "\n "+ title+ 
           //  "\n 설명" + summary +
-           "\n 예약 가능시간 :" + reservableTime + "\n";
+           "\n" + reservableTime + "\n";
           returnText +=tempText;
-        }
+        // }
 
-        //시간 array 가공
+        //예약 가능시간 array 가공
         function refineTimeArray(str){
           let timeArray = [];
           let strLength = str.length;
@@ -390,18 +419,33 @@ function checkReserableTime(msg,replier){
         }
       });
 
-      if(returnText.length <2){
+
+      if(returnText.length <10){
         replier.reply("결과가 존재하지 않습니다.");
       }else{
+        returnText = returnText + "\n 예약 바로가기 : " + directUrl;
         replier.reply(returnText);
       }
   }
 }
 
+//예약 검색 가능한 방탈 리스트 출력
+function getSearchableRoomStoreList(){
+  let returnText = "";
+  ROOM_STORE_LIST.forEach(element => {
+      returnText +="\n" + element.storeName ;
+  });
+  return returnText;
+}
 
 //눈치게임 
 function whoIsLast(){
   
+}
+
+//양식 경고 메시지 출력
+function showCautionMsg(replier){
+  replier.reply("양식에 맞춰 작성해주세요.");
 }
 
 /**
