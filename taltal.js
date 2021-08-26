@@ -66,8 +66,6 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
   }
 
   if(sender == "김진원" ||sender == "김진원/도함수의활용" ){
-    // checkExistDB(msg,replier);
-
     switch(method){
       case "/맛집" : getMatjip(msg, replier);
         break;
@@ -398,12 +396,9 @@ function checkReserableTime(msg,replier){
         reservableTime    = refineTimeArray(reservableTime.replace(/(\s*)/g,""));
         directUrl         = element.siteUrl;
 
-        // if(title.includes(inputTheme)){
           tempText = "\n "+ title+ 
-          //  "\n 설명" + summary +
            "\n" + reservableTime + "\n";
           returnText +=tempText;
-        // }
 
         //예약 가능시간 array 가공
         function refineTimeArray(str){
@@ -440,11 +435,6 @@ function getSearchableRoomStoreList(){
   return returnText;
 }
 
-//눈치게임 
-function whoIsLast(){
-  
-}
-
 //맛집 검색
 function getMatjip(msg,replier){
   if (msg == "/맛집") {
@@ -467,10 +457,8 @@ function getMatjip(msg,replier){
       //결과 메시지 가공
       resultArray.forEach(element => {
         let title      = element.title;
-        // let summary    = element.summary;
         let tempText   = "";
         tempText = "\n "+ title
-          // "\n 종류 :" + summary ;
         returnText +=tempText;        
       });
 
