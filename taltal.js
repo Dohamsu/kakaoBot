@@ -53,15 +53,15 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       break;
     case "/마법의소라고동님" : magicSora(msg,replier);
       break;
-    case "/선택" : chooseOne(msg,replier , sender);
+    case "/선택" : chooseOne(msg,replier);
       break;
     case "/방탈리스트" : searchRoomList(msg,replier);
       break;
     case "/방탈상세" : searchRoomDetail(msg,replier);
       break;
-    case "/방탈예약" : checkReserableTime(msg, replier, sender);
+    case "/방탈예약" : checkReserableTime(msg, replier);
       break;
-    case "/맛집" : getMatjip(msg, replier, sender);
+    case "/맛집" : getMatjip(msg, replier);
       break;
   }
 
@@ -69,7 +69,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     // checkExistDB(msg,replier);
 
     switch(method){
-      case "/맛집" : getMatjip(msg, replier, sender);
+      case "/맛집" : getMatjip(msg, replier);
         break;
       }
   }
@@ -224,7 +224,7 @@ function calculRemainTime(msg, replier, time){
 }
 
 //선택지 고르는 함수
-function chooseOne(msg, replier,sender){
+function chooseOne(msg, replier){
   makeFunction(msg, "/선택",
   function(){
     replier.reply("여러 선택지중 하나를 선택합니다.\n\n" +
@@ -242,7 +242,6 @@ function chooseOne(msg, replier,sender){
 
       let obj = {};
       obj.keywordList  = msg;
-      saveDB(sender, obj );
     }
   }); 
 }
