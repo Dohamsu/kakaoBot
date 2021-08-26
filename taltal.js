@@ -31,12 +31,13 @@ const scriptName = "taltal";
   "제주": 5011059000
 };
 
-const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님", "/선택", "/방탈리스트", "/방탈상세"];
+const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님", "/선택", "/방탈리스트", "/방탈상세","/방탈예약", "/맛집"];
 const MANGER_FUNC_LIST = [ "/DB생성", "" ];
 const ROOM_STORE_LIST = [{"storeName" : "비밀의화원 혜화점", "site" : "secretGarden_Hyewha"}, {"storeName" : "비밀의화원 리버타운점", "site" : "secretGarden_RiverTown"},
  {"storeName" : "비밀의화원 시네마틱혜화", "site" : "secretGarden_CenematicHyewha"},{"storeName" : "포인트나인 강남1호점", "site" : "pointNine_Gangnam1"},
  {"storeName" : "포인트나인 강남2호점", "site" : "pointNine_Gangnam2"}];
 const ROOM_CROLLING_URL = "http://110.35.170.102:8808/croll/";
+const MATJIP_URL = "http://110.35.170.102:8808/croll/matjip/";
 
 function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
   var fullMsg = msg;
@@ -60,15 +61,17 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
       break;
     case "/방탈예약" : checkReserableTime(msg, replier, sender);
       break;
-    }
+    case "/맛집" : getMatjip(msg, replier, sender);
+      break;
+  }
 
   if(sender == "김진원" ||sender == "김진원/도함수의활용" ){
     // checkExistDB(msg,replier);
 
-    // switch(method){
-    //   case "/방탈예약" : checkReserableTime(msg, replier, sender);
-    //     break;
-    //   }
+    switch(method){
+      case "/맛집" : getMatjip(msg, replier, sender);
+        break;
+      }
   }
 
   //구어에 반응
@@ -441,6 +444,45 @@ function getSearchableRoomStoreList(){
 //눈치게임 
 function whoIsLast(){
   
+}
+
+//맛집 검색
+function getMatjip(msg,replier){
+  if (msg == "/맛집") {
+    replier.reply("맛집을 검색합니다.\n\n" +
+        "\"예시) /맛집 강남역");
+  } else if (msg.startsWith("/맛집 ")) {
+      let inputText  = msg.replace("/맛집 ", "");
+
+      if(!inputText){
+        showCautionMsg(replier);
+        return;
+      }
+      let searchUrl  = MATJIP_URL + "keyword="+ inputText;
+
+      //jsoup의 경우 파싱과 xml response 만 가능하여 xml 형식으로 받음
+      var data        = org.jsoup.Jsoup.connect(searchUrl).get();      
+      let resultArray = JSON.parse(data); //tojson
+      let returnText  = "";
+      
+      //결과 메시지 가공
+      resultArray.forEach(element => {
+        let title      = element.title;
+        // let summary    = element.summary;
+        let tempText   = "";
+        tempText = "\n "+ title
+          // "\n 종류 :" + summary ;
+        returnText +=tempText;        
+      });
+
+
+      if(returnText.length <10){
+        replier.reply("결과가 존재하지 않습니다.");
+      }else{
+        replier.reply(returnText);
+      }
+  }
+
 }
 
 //양식 경고 메시지 출력
