@@ -67,8 +67,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
 
   if(sender == "김진원" ||sender == "김진원/도함수의활용" ){
     switch(method){
-      case "/맛집" : getMatjip(msg, replier);
-        break;
+
       }
   }
 
