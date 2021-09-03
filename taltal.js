@@ -31,7 +31,7 @@ const scriptName = "taltal";
   "제주": 5011059000
 };
 
-const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님", "/선택", "/방탈리스트", "/방탈상세","/방탈예약", "/맛집"];
+const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님", "/선택", "/방탈리스트", "/방탈상세","/방탈예약", "/맛집", "/로또"];
 const MANGER_FUNC_LIST = [ "/DB생성", "" ];
 const ROOM_STORE_LIST = [{"storeName" : "비밀의화원 혜화점", "site" : "secretGarden_Hyewha"}, {"storeName" : "비밀의화원 리버타운점", "site" : "secretGarden_RiverTown"},
  {"storeName" : "비밀의화원 시네마틱혜화", "site" : "secretGarden_CenematicHyewha"},{"storeName" : "포인트나인 강남1호점", "site" : "pointNine_Gangnam1"},
@@ -62,6 +62,8 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     case "/방탈예약" : checkReserableTime(msg, replier);
       break;
     case "/맛집" : getMatjip(msg, replier);
+      break;
+    case "/로또" : randomLotto(msg, replier);
       break;
   }
 
@@ -197,14 +199,12 @@ function searchRoomDetail(msg, replier){
 
 //남은시간 계산기 
 function calculRemainTime(msg, replier, time){
-  let nowTime  = new Date();
-  let nowYear  = nowTime.getFullYear();
-  let nowMonth = nowTime.getMonth();
-  let nowDay   = nowTime.getDate();
-  let nowHour  = nowTime.getHours();
-  let nowMin   = nowTime.getMinutes();
+  let nowTime    = new Date();
+  let nowYear    = nowTime.getFullYear();
+  let nowMonth   = nowTime.getMonth();
+  let nowDay     = nowTime.getDate();
   let targetTime = new Date(nowYear, nowMonth, nowDay, time);
-  let term = targetTime - nowTime;
+  let term       = targetTime - nowTime;
   // let hour    = time.
   
   let termHour = Math.floor(term/1000/60/60);
@@ -271,6 +271,34 @@ function chooseOne(msg, replier){
       obj.keywordList  = msg;
     }
   }); 
+}
+
+//로또 번호 추천
+function randomLotto(msg, replier){
+    let resultArray =  [];
+    let ARRAY_LENGTH = 6;
+    while(resultArray.length < ARRAY_LENGTH){
+      var randomNum = Math.floor(Math.random()*47);
+      if(resultArray.indexOf(randomNum) <  0 && randomNum > 0 ){
+        resultArray.push(randomNum);
+      }
+    }
+
+    replier.reply("추첨을 시작합니다....");
+
+    let countdown = setInterval(
+      function(){
+        replier.reply(resultArray[ARRAY_LENGTH-1]);
+        ARRAY_LENGTH--;          
+        if(ARRAY_LENGTH<1){
+           //숫자 정렬
+          resultArray.sort(function(a, b){ return a-b; });
+          replier.reply("당첨 번호 : " + resultArray);
+
+          clearInterval(countdown);
+        }
+      }
+      , 2000);
 }
 
 //마법의 소라고동 
