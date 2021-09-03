@@ -275,16 +275,45 @@ function chooseOne(msg, replier){
 
 //로또 번호 추천
 function randomLotto(msg, replier){
-    let resultArray =  [];
-    let ARRAY_LENGTH = 6;
+  makeFunction(msg, "/로또",
+  function(){
+    replier.reply("로또를 추첨합니다.\n\n" +
+    "\"예시) /로또 1,5,16,17,31,44");
+  }, function(){
+    msg                = msg.replace("/로또 ", "");
+    let inputList      = msg.split(","); 
+    let resultArray    = [];
+    let ARRAY_LENGTH   = 6;
+    let matchNumber    = 0; // 일치 숫자 개수
+    let resultRankText = "";// 당첨 문구
+
     while(resultArray.length < ARRAY_LENGTH){
-      var randomNum = Math.floor(Math.random()*47);
+      var randomNum = Math.floor(Math.random()*46);
       if(resultArray.indexOf(randomNum) <  0 && randomNum > 0 ){
         resultArray.push(randomNum);
+        if(inputList.indexOf(randomNum.toString()) > -1 ){
+          matchNumber++;
+        }
       }
     }
 
     replier.reply("추첨을 시작합니다....");
+
+    switch(matchNumber){
+      case 1 : resultRankText = "다음에 다시 시도해보세요~";
+        break;
+      case 2 : resultRankText = "5등 당첨 축하합니다";
+        break;
+      case 3 : resultRankText = "4등 당첨 축하합니다";
+        break;
+      case 4 : resultRankText = "3등 당첨 축하합니다";
+        break;
+      case 5 : resultRankText = "2등 당첨 축하합니다";
+        break;
+      case 6 : resultRankText = "1등 당첨 축하합니다";
+       break;
+      default : resultRankText = "꽝";
+    }
 
     let countdown = setInterval(
       function(){
@@ -293,12 +322,13 @@ function randomLotto(msg, replier){
         if(ARRAY_LENGTH<1){
            //숫자 정렬
           resultArray.sort(function(a, b){ return a-b; });
-          replier.reply("당첨 번호 : " + resultArray);
+          replier.reply("당첨 번호 : " + resultArray +"\n" + "일치번호 : " + matchNumber + "개"+ "\n" + resultRankText );
 
           clearInterval(countdown);
         }
       }
-      , 2000);
+      , 1000);
+  }); 
 }
 
 //마법의 소라고동 
