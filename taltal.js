@@ -226,24 +226,6 @@ function reactionByLang(){
   var resultTxt = "";
   
   switch(randomNum){
-    case 1 : resultTxt = "히히 ";
-      break;
-    case 2 : resultTxt = "";
-      break;
-    case 3 : resultTxt = "그러렴";
-      break;
-    case 4 : resultTxt = "다시 한 번 말해봐";
-      break;
-    case 5 : resultTxt = "아니";
-      break;
-    case 6 : resultTxt = "그럼";
-      break;
-    case 7 : resultTxt = "다 안돼";
-      break;
-    case 8 : resultTxt = "가만히 있어";
-      break;
-    case 9 : resultTxt = "언젠가는";
-      break;
 
   }
   replier.reply(resultTxt);
