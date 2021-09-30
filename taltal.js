@@ -69,7 +69,7 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
 
   if(sender == "김진원" ||sender == "김진원/도함수의활용" ){
     switch(method){
-
+    
       }
   }
 
@@ -84,6 +84,12 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
 
       calculRemainTime(msg,replier, 18);
       break;
+    case "퇴사할래" : 
+    case "퇴사" : 
+    case "퇴사마렵다" : 
+      calculExitDday(msg,replier, 18);
+    break;
+
    }
 
   //메시지 읽음 처리
@@ -218,6 +224,25 @@ function calculRemainTime(msg, replier, time){
     replier.reply("퇴근까지 " + hourText + termMin+ "분 남았습니다.");
 
   }
+}
+
+
+//남은시간 계산기 
+function calculExitDday(msg, replier){
+  let nowTime    = new Date();
+  let nowYear    = nowTime.getFullYear();
+  let nowMonth   = nowTime.getMonth();
+  let nowDay     = nowTime.getDate();
+  let targetTime = new Date(nowYear, 9, 22);
+  let term       = targetTime - nowTime;
+  // let hour    = time.
+  
+  let termDay  = Math.floor(term/1000/60/60/24);
+  let termHour = Math.floor(term/1000/60/60)%24;
+  let termMin  = Math.ceil((term/1000/60)%60);
+
+    
+  replier.reply("퇴사까지 "+ termDay+ "일"+ termHour + "시간 " + termMin+ "분 남았습니다.");
 }
 
 //구어 반응기
