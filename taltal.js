@@ -31,13 +31,14 @@ const scriptName = "taltal";
   "제주": 5011059000
 };
 
-const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님", "/선택", "/방탈리스트", "/방탈상세","/방탈예약", "/맛집", "/로또"];
+const FUNC_LIST = [ "/날씨", "/카운트다운","/마법의소라고동님", "/선택", "/방탈리스트", "/방탈상세","/방탈예약", "/맛집", "/로또", "/MMR"];
 const MANGER_FUNC_LIST = [ "/DB생성", "" ];
 const ROOM_STORE_LIST = [{"storeName" : "비밀의화원 혜화점", "site" : "secretGarden_Hyewha"}, {"storeName" : "비밀의화원 리버타운점", "site" : "secretGarden_RiverTown"},
  {"storeName" : "비밀의화원 시네마틱혜화", "site" : "secretGarden_CenematicHyewha"},{"storeName" : "포인트나인 강남1호점", "site" : "pointNine_Gangnam1"},
  {"storeName" : "포인트나인 강남2호점", "site" : "pointNine_Gangnam2"}];
 const ROOM_CROLLING_URL = "http://110.35.170.102:8808/croll/";
 const MATJIP_URL = "http://110.35.170.102:8808/croll/matjip/";
+const MMR_URL = "http://110.35.170.102:8808/API/";
 
 function response(room, msg, sender, isGroupChat, replier, imageDB, packageName) {
   var fullMsg = msg;
@@ -64,6 +65,8 @@ function response(room, msg, sender, isGroupChat, replier, imageDB, packageName)
     case "/맛집" : getMatjip(msg, replier);
       break;
     case "/로또" : randomLotto(msg, replier);
+      break;
+    case "/MMR" : searchMMR(msg, replier);
       break;
   }
 
@@ -242,7 +245,7 @@ function calculExitDday(msg, replier){
   let termMin  = Math.ceil((term/1000/60)%60);
 
     
-  replier.reply("퇴사까지 "+ termDay+ "일"+ termHour + "시간 " + termMin+ "분 남았습니다.");
+  replier.reply("퇴사까지 "+ termDay+ "일 "+ termHour + "시간 " + termMin+ "분 남았습니다.");
 }
 
 //구어 반응기
@@ -552,7 +555,7 @@ function getMatjip(msg,replier){
       resultArray.forEach(element => {
         let title      = element.title;
         let tempText   = "";
-        tempText = "\n "+ title
+        tempText = "\n "+ title;
         returnText +=tempText;        
       });
 
@@ -563,8 +566,50 @@ function getMatjip(msg,replier){
         replier.reply(returnText);
       }
   }
+}
+
+//MMR 검색
+function searchMMR(msg,replier){
+  if (msg == "/MMR") {
+    replier.reply("칼바람 MMR을 검색합니다.\n\n" +
+        "\"예시) /MMR 도함수의활용");
+  } else if (msg.startsWith("/MMR ")) {
+      let inputText  = msg.replace("/MMR ", "");
+
+      if(!inputText){
+        showCautionMsg(replier);
+        return;
+      }
+      let searchUrl  = MMR_URL + "summoner="+ inputText;
+
+      //jsoup의 경우 파싱과 xml response 만 가능하여 xml 형식으로 받음
+      var data         = org.jsoup.Jsoup.connect(searchUrl).get();      
+
+      if(data=="ERROR"){
+        replier.reply("결과가 존재하지 않습니다.");
+      }else{
+        let aramData    = JSON.parse(data); //tojson
+        let returnText  = "";
+        
+        // 결과 메시지 가공      
+        let status     = aramData.err; //결과 상태
+        
+        if(status != 99){
+          let rank      = aramData.closestRank;
+          let percent   =  100 - aramData.percentile;
+          let MMR = aramData.historical.length > 0 ? aramData.historical[0].avg  : aramData.avg ;
+
+          returnText = "칼바람 \n랭크 : "+ rank  + "\n상위 " +percent.toFixed(2) +"%" + "\nMMR : " + MMR;
+        }else{
+          returnText = "솔로 플레이한 게임이 충분하지 않습니다.";
+        }
+
+        replier.reply(returnText);
+      }
+  }
 
 }
+
 
 //양식 경고 메시지 출력
 function showCautionMsg(replier){
